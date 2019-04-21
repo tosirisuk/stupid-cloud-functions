@@ -49,11 +49,12 @@ app.post("/rooms/:roomid/events", async (req, res) => {
   let events = snapshot.val();
   const amount = 1;
   const { playerId, type } = req.body;
-  if (events.length <= 1) {
-    events[1] = { amount, playerId, type };
-  } else {
-    events.push({ amount, playerId, type });
+
+  if (!snapshot || !events) {
+    events = [];
   }
+  events.push({ amount, playerId, type });
+
   snapshot = await admin
     .database()
     .ref(`rooms/${req.params.roomid}/players`)
