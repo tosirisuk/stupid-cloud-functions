@@ -50,11 +50,6 @@ app.post("/rooms/:roomid/events", async (req, res) => {
   const amount = 1;
   const { playerId, type } = req.body;
 
-  if (!snapshot || !events) {
-    events = [];
-  }
-  events.push({ amount, playerId, type });
-
   snapshot = await admin
     .database()
     .ref(`rooms/${req.params.roomid}/players`)
@@ -67,11 +62,16 @@ app.post("/rooms/:roomid/events", async (req, res) => {
       .status(400)
       .send(`playerId ${playerId} not found in this room ${req.params.roomid}`);
   }
+  if (!snapshot || !events) {
+    events = [];
+  }
+
   for (let key of keys) {
     if (key === playerId) {
       players[key].progress += amount;
     } else {
       players[key].shots = Number(players[key].shots) + Number(amount);
+      events.push({ amount, playerId: key, type });
     }
   }
   const eventSnapshot = await admin
