@@ -87,6 +87,40 @@ app.post("/rooms/:roomid/events", async (req, res) => {
     .send({ eventSnapshot, playersSnapshot, events, players });
 });
 
+app.delete("/rooms/:roomid/events", async (req, res) => {
+  let snapshot = await admin
+    .database()
+    .ref(`rooms/${req.params.roomid}/events`)
+    .once("value");
+  let events = snapshot.val();
+
+  snapshot = await admin
+    .database()
+    .ref(`rooms/${req.params.roomid}/players`)
+    .once("value");
+  let players = snapshot.val();
+  let keys = Object.keys(players);
+
+  events = [];
+  events.push({ amount: 1, playerId: "dummy", type: "dummy action" });
+
+  for (let key of keys) {
+    players[key].progress = 0;
+    players[key].shots = 0;
+  }
+  const eventSnapshot = await admin
+    .database()
+    .ref(`rooms/${req.params.roomid}`)
+    .update({ events: events });
+  const playersSnapshot = await admin
+    .database()
+    .ref(`rooms/${req.params.roomid}`)
+    .update({ players: players });
+  return res
+    .status(200)
+    .send({ eventSnapshot, playersSnapshot, events, players });
+});
+
 app.use("/room/*", (req, res) => {
   return res.status(404).send("Are you looking for /rooms ?");
 });
